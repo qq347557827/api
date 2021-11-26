@@ -9,7 +9,7 @@ COPY . .
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories && apk update
 
-RUN apk --no-cache add --virtual builds-deps build-base python alpine-sdk 
+RUN apk --no-cache add --virtual builds-deps build-base python2 alpine-sdk 
   # && npm install --no-progress --registry=https://registry.npm.taobao.org 
 RUN npm install -g cnpm --no-progress --registry=https://registry.npmmirror.com 
 RUN cnpm install node-pre-gyp 
