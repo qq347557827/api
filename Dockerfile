@@ -16,7 +16,7 @@ RUN npm install --no-progress --registry=https://registry.npmmirror.com
 #RUN cnpm install --no-progress 
 RUN npm run build 
 RUN npm rebuild bcrypt --build-from-source
-RUN apk del builds-dep
+#RUN apk del builds-dep
 
 EXPOSE 3000 3001
 
