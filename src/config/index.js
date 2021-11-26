@@ -25,7 +25,7 @@ const REDIS = {
 const JWT_SECRET = '&Vi%33pG2mD51xMo%OUOTo$ZWOa3TYt328tcjXtW9&hn%AOb9quwaZaRMf#f&44c'
 
 const baseUrl = process.env.NODE_ENV === 'production' ? 'http://front.dev.toimc.com:22500' : 'http://localhost:8080'
-
+// baseUrl是修改密码,发送给用户跳转的链接
 const uploadPath = process.env.NODE_ENV === 'production' ? '/app/public' : path.join(path.resolve(__dirname), '../../public')
 
 const adminEmail = ['ok@qq.com']
