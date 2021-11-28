@@ -5,9 +5,17 @@ import User from '@/model/User'
 import Comments from '@/model/Comments'
 import SignRecord from '@/model/SignRecord'
 import moment from 'dayjs'
-import { getMenuData, sortMenus, getRights } from '@/common/Utils'
+import { menusGetMenuData, getRights } from '@/common/Utils'
 import qs from 'qs'
 // import CommentsUsers from '../model/CommentsUsers'
+
+function weekNumArr () {
+  let arr = []
+  for (let i = 0; i < 7; i++) {
+    arr.push(parseInt(Math.random() * 1000, 10) + 1)
+  }
+  return arr
+}
 
 const weekday = require('dayjs/plugin/weekday')
 moment.extend(weekday)
@@ -17,7 +25,8 @@ class AdminController {
     const result = await Menu.find({})
     ctx.body = {
       code: 200,
-      data: sortMenus(result)
+      // data: sortMenus(result)
+      data: result
     }
   }
 
@@ -99,24 +108,27 @@ class AdminController {
 
   // 获取用户的菜单权限，菜单数据
   async getRoutes (ctx) {
-    // 1. obj -> _id -> roles
-    const user = await User.findOne({ _id: ctx._id }, { roles: 1 })
-    const { roles } = user
-    // 2. 通过角色 -> menus
-    // 用户的角色可能有多个
-    // 角色 menus -> 去重
     let menus = []
-    for (let i = 0; i < roles.length; i++) {
-      const role = roles[i]
-      const rights = await Roles.findOne({ role }, { menu: 1 })
-      menus = menus.concat(rights.menu)
+    if (!ctx.isAdmin) {
+      // 1. obj -> _id -> roles
+      const user = await User.findOne({ _id: ctx._id }, { roles: 1 })
+      const { roles } = user
+      // 2. 通过角色 -> menus
+      // 用户的角色可能有多个
+      // 角色 menus -> 去重
+
+      for (let i = 0; i < roles.length; i++) {
+        const role = roles[i]
+        const rights = await Roles.findOne({ role }, { menu: 1 })
+        menus = menus.concat(rights.menu)
+      }
+      menus = Array.from(new Set(menus))
     }
-    menus = Array.from(new Set(menus))
-    // 3. menus -> 可以访问的菜单数据
+
     const treeData = await Menu.find({})
     // 递归查询 type = 'menu' && _id 包含在menus中
     // 结构进行改造
-    const routes = getMenuData(treeData, menus, ctx.isAdmin)
+    const routes = menusGetMenuData(treeData, menus, ctx.isAdmin)
     ctx.body = {
       code: 200,
       data: routes
@@ -242,7 +254,7 @@ class AdminController {
 
   async getCommentsAll (ctx) {
     const params = qs.parse(ctx.query)
-    let options = { }
+    let options = {}
     if (params.options) {
       options = params.options
     }
@@ -285,6 +297,18 @@ class AdminController {
       code: 200,
       msg: '删除成功',
       data: result
+    }
+  }
+
+  getWeekData (ctx) {
+    ctx.body = {
+      code: 200,
+      data: {
+        ask: weekNumArr(),
+        share: weekNumArr(),
+        advise: weekNumArr(),
+        discuss: weekNumArr()
+      }
     }
   }
 }

@@ -1,7 +1,10 @@
-import SignRecord from '../model/SignRecord'
-import { getJWTPayload } from '../common/Utils'
 import User from '../model/User'
 import UserCollect from '../model/UserCollect'
+import Roles from '../model/Roles'
+import Menus from '../model/Menus'
+
+import SignRecord from '../model/SignRecord'
+import { getJWTPayload, menusGetMenuData } from '../common/Utils'
 import moment from 'dayjs'
 import send from '@/config/MailConfig'
 import uuid from 'uuid/v4'
@@ -501,6 +504,42 @@ class UserController {
         code: 500,
         msg: '服务接口异常'
       }
+    }
+  }
+
+  // 获取用户信息
+  async getUserInfo (ctx) {
+    const id = ctx._id
+    if (!id) {
+      ctx.status = 401
+      ctx.body = {
+        code: 401,
+        msg: 'Protected resource, use Authorization header to get access\n'
+      }
+    }
+    const user = await User.findById(id)
+    // eslint-disable-next-line no-unused-vars
+    let arr = ['password']
+    arr = arr.map(item => {
+      delete user[item]
+    })
+
+    // 获取用户的路由数据
+    const { roles } = user
+    let menus = []
+    for (let i = 0; i < roles.length; i++) {
+      const element = roles[i]
+      const menu = await Roles.findOne({ code: element }, { menu: 1 })
+      menus.push(...menu.menu)
+    }
+    menus = Array.from(new Set(menus))
+    const treeData = await Menus.find()
+    const routes = menusGetMenuData(treeData, menus)
+
+    ctx.body = {
+      code: 200,
+      data: user,
+      routes
     }
   }
 }

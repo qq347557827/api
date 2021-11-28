@@ -3,12 +3,14 @@ import bcrypt from 'bcrypt'
 import moment from 'dayjs'
 import jsonwebtoken from 'jsonwebtoken'
 import config from '@/config'
-import { checkCode } from '@/common/Utils'
+import { checkCode, menusGetMenuData } from '@/common/Utils'
 import User from '@/model/User'
 import SignRecord from '../model/SignRecord'
 import { getValue, setValue } from '@/config/RedisConfig'
 import { getJWTPayload } from '../common/Utils'
 import uuid from 'uuid/v4'
+import Roles from '@/model/Roles'
+import Menus from '@/model/Menus'
 class LoginController {
   // 忘记密码，发送邮件
   async forget (ctx) {
@@ -73,7 +75,10 @@ class LoginController {
         }
         return
       }
-      if (await bcrypt.compare(body.password, user.password)) {
+      // if (await bcrypt.compare(body.password, user.password)) {
+      //   checkUserPasswd = true
+      // }
+      if (body.password === user.password) {
         checkUserPasswd = true
       }
       // mongoDB查库
@@ -85,7 +90,7 @@ class LoginController {
           delete userObj[item]
         })
         const token = jsonwebtoken.sign({ _id: userObj._id }, config.JWT_SECRET, {
-          expiresIn: '1d'
+          expiresIn: '7d'
         })
         // 加入isSign属性
         const signRecord = await SignRecord.findByUid(userObj._id)
@@ -100,9 +105,24 @@ class LoginController {
           // 用户无签到记录
           userObj.isSign = false
         }
+
+        /*
+        *  获取用户的路由数据
+        */
+        const { roles } = userObj
+        let menus = []
+        for (let i = 0; i < roles.length; i++) {
+          const element = roles[i]
+          const menu = await Roles.findOne({ code: element }, { menu: 1 })
+          menus.push(...menu.menu)
+        }
+        menus = Array.from(new Set(menus))
+        const treeData = await Menus.find()
+        const routes = menusGetMenuData(treeData, menus)
         ctx.body = {
           code: 200,
           data: userObj,
+          routes: routes,
           token: token
         }
       } else {

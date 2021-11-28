@@ -2,9 +2,9 @@ import WebSocket from 'ws'
 import { getJWTPayload } from '@/common/Utils'
 import Comments from '@/model/Comments'
 import configfile from './index'
-//
+
 class WebSocketServer {
-  constructor (config = {}) {
+  constructor(config = {}) {
     const defaultConfig = {
       port: configfile.wsPort,
       timeInterval: 5 * 1000,

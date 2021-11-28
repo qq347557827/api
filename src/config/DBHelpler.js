@@ -1,11 +1,17 @@
 import mongoose from 'mongoose'
 import config from './index'
 
+const DB_URL = 'mongodb://admin:123456@119.91.192.232:27017/admin'
+
 mongoose.set('useCreateIndex', true)
 // mongoose.set('debug', true)
 
 // 创建连接
-mongoose.connect(config.DB_URL, {
+// mongoose.connect(config.DB_URL, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true
+// })
+mongoose.connect(DB_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })

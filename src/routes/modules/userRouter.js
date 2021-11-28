@@ -6,7 +6,8 @@ import errorController from '@/api/ErrorController'
 const router = new Router()
 
 router.prefix('/user')
-
+// 获得用户信息
+router.get('/userInfo', userController.getUserInfo)
 // 用户签到
 router.get('/fav', userController.userSign)
 

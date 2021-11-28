@@ -7,13 +7,23 @@ import config from '@/config'
 // method1
 // import { dirExists } from '@/common/Utils'
 import mkdir from 'make-dir'
-import { checkCode, getJWTPayload } from '@/common/Utils'
+import { checkCode, getJWTPayload, base64ToImg } from '@/common/Utils'
 import User from '@/model/User'
 import PostTags from '@/model/PostTags'
 import UserCollect from '../model/UserCollect'
 import qs from 'qs'
 
 class ContentController {
+  async updateBase64 (ctx) {
+    const body = ctx.request.body
+    const base = body.base
+    const imgPath = await base64ToImg(base)
+    ctx.body = {
+      code: 200,
+      imgPath
+    }
+  }
+
   // 获取文章列表
   async getPostList (ctx) {
     const body = qs.parse(ctx.query)
@@ -124,27 +134,34 @@ class ContentController {
   // 添加新贴
   async addPost (ctx) {
     const { body } = ctx.request
+    console.log('addPost->body: ', body)
     const sid = body.sid
     const code = body.code
     // 验证图片验证码的时效性、正确性
     const result = await checkCode(sid, code)
+    console.log('addPost->result: ', result)
     if (result) {
       const obj = await getJWTPayload(ctx.header.authorization)
+      console.log('obj: ', obj)
       // 判断用户的积分数是否 > fav，否则，提示用户积分不足发贴
       // 用户积分足够的时候，新建Post，减除用户对应的积分
       const user = await User.findByID({ _id: obj._id })
-      if (user.favs < body.fav) {
+      console.log('user: ', user)
+      if (user.favs < body.favs) {
+        console.log('user.favs: ', user.favs)
         ctx.body = {
           code: 501,
           msg: '积分不足'
         }
         return
       } else {
-        await User.updateOne({ _id: obj._id }, { $inc: { favs: -body.fav } })
+        await User.updateOne({ _id: obj._id }, { $inc: { favs: -body.favs } })
       }
       const newPost = new Post(body)
+      console.log('newPost: ', newPost)
       newPost.uid = obj._id
       const result = await newPost.save()
+      console.log('result: ', result)
       ctx.body = {
         code: 200,
         msg: '成功的保存的文章',

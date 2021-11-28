@@ -1,20 +1,21 @@
 import Router from 'koa-router'
-import commentsController from '@/api/CommentsController'
+import CommentsController from '@/api/CommentsController'
 
 const router = new Router()
 
 router.prefix('/comments')
 
 // 添加评论
-router.post('/reply', commentsController.addComment)
+router.post('/reply', CommentsController.addComment)
 
-// 更新评论
-router.post('/update', commentsController.updateComment)
+router.post('/revise', CommentsController.reviseComment)
 
-// 设置最佳答案
-router.get('/accept', commentsController.setBest)
+router.post('/accept', CommentsController.acceptComment)
 
-// 评论点赞
-router.get('/hands', commentsController.setHands)
+router.post('/sethand', CommentsController.setHand)
+
+router.post('/chatRayle', CommentsController.chatRayle)
+
+router.post('/chatRayleChat', CommentsController.chatRayleChat)
 
 export default router

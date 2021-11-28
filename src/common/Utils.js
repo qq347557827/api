@@ -4,8 +4,25 @@ import jwt from 'jsonwebtoken'
 import fs from 'fs'
 import path from 'path'
 
+import moment from 'dayjs'
+import { v4 as uuidv4 } from 'uuid'
+import makedir from 'make-dir'
+
 const getJWTPayload = token => {
-  return jwt.verify(token.split(' ')[1], config.JWT_SECRET)
+  if (!token) return
+  let tk
+  try {
+    if (/^Bearer/.test(token)) {
+      tk = jwt.verify(token.split(' ')[1], config.JWT_SECRET)
+      console.log('tk: ', tk)
+      return tk
+    } else {
+      tk = jwt.verify(token, config.JWT_SECRET)
+    }
+  } catch (error) {
+    console.log('error: ', error)
+  }
+  return tk
 }
 
 const checkCode = async (key, value) => {
@@ -123,6 +140,25 @@ const getMenuData = (tree, rights, flag) => {
   return sortObj(arr, 'sort')
 }
 
+const menusGetMenuData = (treeData, menus, flg) => {
+  let arr = []
+  for (let i = 0; i < treeData.length; i++) {
+    const item = treeData[i]
+    if (item.type === 'menu') {
+      if (item.children && item.children.length > 0) {
+        item.children = menusGetMenuData(item.children, menus, flg)
+      }
+      const id = item._id + ''
+      if (flg || menus.includes(id) || (item.children && item.children.length > 0)) {
+        arr.push(item)
+      }
+    } else if (item.type === 'link' || item.type === 'resource') {
+      arr.push(item)
+    }
+  }
+  return arr
+}
+
 const flatten = (arr) => {
   while (arr.some((item) => Array.isArray(item))) {
     arr = [].concat(...arr)
@@ -146,13 +182,32 @@ const getRights = (tree, menus) => {
   return flatten(arr)
 }
 
+const base64ToImg = async (base) => {
+  const test = base.match(/^data:image\/\w+;base64,/g)
+
+  const ext = test[0].substr(11, test[0].length - 19)
+  // eslint-disable-next-line camelcase
+  const base_64_url = base.replace(/^data:image\/\w+;base64,/, '')
+  const dataBuffer = await Buffer.from(base_64_url, 'base64')
+  const dir = `${config.uploadPath}/${moment().format('YYYYMMDD')}`
+  await makedir(dir)
+  const picname = uuidv4()
+  const destPath = `${dir}/${picname}.${ext}`
+
+  await fs.writeFile(destPath, dataBuffer, function (err) {
+    console.log('err: ', err)
+  })
+  return `/${moment().format('YYYYMMDD')}/${picname}.${ext}`
+}
 export {
   checkCode,
   getJWTPayload,
   dirExists,
   rename,
   getMenuData,
+  menusGetMenuData,
   sortMenus,
   flatten,
-  getRights
+  getRights,
+  base64ToImg
 }
