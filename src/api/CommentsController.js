@@ -1,4 +1,4 @@
-import { getJWTPayload, base64ToImg } from '../common/Utils'
+import { getJWTPayload, base64ToImg, wsSend } from '../common/Utils'
 // import { getJWTPayload } from '../conmon/Utils';
 import moment from 'dayjs'
 import config from '../config/index'
@@ -65,18 +65,18 @@ class CommentsController {
     })
     const user = await Users.findById({ _id: obj._id })
 
-    // const notfiy = {
-    //   title: '文章评论',
-    //   unread_num: user.unread_num,
-    //   message: `${user.name}评论了您的文章${findPost.title}`
-    // }
+    const notfiy = {
+      title: '文章评论',
+      unread_num: user.unread_num,
+      message: `${user.name}评论了您的文章${findPost.title}`
+    }
 
     ctx.body = {
       code: 200,
       msg: '评论成功',
       data: commentObj
     }
-    // global.ws.send(findPost.uid, notfiy)
+    wsSend(user._id, notfiy)
   }
 
   async reviseComment (ctx) {

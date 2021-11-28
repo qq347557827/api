@@ -199,6 +199,12 @@ const base64ToImg = async (base) => {
   })
   return `/${moment().format('YYYYMMDD')}/${picname}.${ext}`
 }
+
+const wsSend = async (id, notfiy) => {
+  console.log('notfiy: ', notfiy)
+  console.log('id: ', id)
+  global.ws.send(id, notfiy)
+}
 export {
   checkCode,
   getJWTPayload,
@@ -209,5 +215,6 @@ export {
   sortMenus,
   flatten,
   getRights,
-  base64ToImg
+  base64ToImg,
+  wsSend
 }
