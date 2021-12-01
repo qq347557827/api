@@ -92,6 +92,7 @@ class ContentController {
   // 上传图片
   async uploadImg (ctx) {
     const file = ctx.request.files.file
+    console.log('file: ', file)
     // 图片名称、图片格式、存储的位置，返回前台一可以读取的路径
     const ext = file.name.split('.').pop()
     const dir = `${config.uploadPath}/${moment().format('YYYYMMDD')}`

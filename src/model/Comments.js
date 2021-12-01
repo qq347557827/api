@@ -8,6 +8,7 @@ const CommentsSchema = new Schema({
   uid: { type: String, ref: 'users' },
   cuid: { type: String, ref: 'users' },
   content: { type: String },
+  commentImg: { type: String },
   created: { type: Date },
   hands: { type: Number, default: 0 },
   status: { type: String, default: '1' },

@@ -50,4 +50,10 @@ router.get('/hotComments', publicController.getHotComments)
 // 获取用签到排行
 router.get('/hotSignRecord', publicController.getHotSignRecord)
 
+// 通过file对象上传图片
+router.post('/upload', contentController.uploadImg)
+
+// 通过base64上传图片
+router.post('/updateBase64', contentController.updateBase64)
+
 export default router

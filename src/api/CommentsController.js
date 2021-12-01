@@ -13,6 +13,7 @@ import fs from 'fs'
 import mkdir from 'make-dir'
 import { v4 as uuidv4 } from 'uuid'
 
+// 是否被禁言判断
 const isStatus = async (token) => {
   const obj = getJWTPayload(token)
   const user = await Users.findById(obj._id)
@@ -22,61 +23,66 @@ const isStatus = async (token) => {
 class CommentsController {
   // 新增评论
   async addComment (ctx) {
-    const file = ctx.request.files.file
-    const body = ctx.request.body
-    const commentObj = {}
-    commentObj.content = body.content
-    commentObj.tid = body.tid
     // eslint-disable-next-line no-unused-vars
-    const flg = await isStatus(ctx.header.authorization)
-
-    const obj = await getJWTPayload(ctx.header.authorization)
-
-    // const commentObj = { tid, content, commentImg }
-
-    if (file) {
-      const ext = file.name.split('.').pop()
-      const dir = `${config.uploadPath}/${moment().format('YYYYMMDD')}`
-      await mkdir(dir)
-      const picname = uuidv4()
-      const destPath = `${dir}/${picname}.${ext}`
-      const render = fs.createReadStream(file.path)
-      const upStream = fs.createWriteStream(destPath)
-      render.pipe(upStream)
-      commentObj.commentImg = `/${moment().format('YYYYMMDD')}/${picname}.${ext}`
-    }
-    const newComment = new Comments(commentObj)
-
-    // const newComment = new Comments({ content: body.content })
-
-    // newComment.content = body.content
-    newComment.cuid = obj._id
-    const comment = await newComment.save()
-    await Post.updateOne({ _id: body.tid }, {
-      $inc: {
-        answer: +1
+    let flg = await isStatus(ctx.header.authorization)
+    // 判断有没有被禁言
+    if (!flg) {
+      const obj = await getJWTPayload(ctx.header.authorization)
+      const body = ctx.request.body
+      const commentObj = {
+        content: body.content,
+        tid: body.tid,
+        cuid: obj._id
       }
-    })
-    const findPost = await Post.findById({ _id: body.tid })
-    await Users.updateOne({ _id: findPost.uid }, {
-      $inc: {
-        unread_num: 1
+      // eslint-disable-next-line no-unused-vars
+      // const commentObj = { tid, content, commentImg }
+      if (ctx.request.files && ctx.request.files.file) {
+        const file = ctx.request.files.file
+        const ext = file.name.split('.').pop()
+        const dir = `${config.uploadPath}/${moment().format('YYYYMMDD')}`
+        await mkdir(dir)
+        const picname = uuidv4()
+        const destPath = `${dir}/${picname}.${ext}`
+        const render = fs.createReadStream(file.path)
+        const upStream = fs.createWriteStream(destPath)
+        render.pipe(upStream)
+        commentObj.commentImg = `/${moment().format('YYYYMMDD')}/${picname}.${ext}`
+      } else if (body.commentImg) {
+        commentObj.commentImg = await base64ToImg(body.commentImg)
       }
-    })
-    const user = await Users.findById({ _id: obj._id })
 
-    const notfiy = {
-      title: '文章评论',
-      unread_num: user.unread_num,
-      message: `${user.name}评论了您的文章${findPost.title}`
-    }
+      const newComment = new Comments(commentObj)
 
-    ctx.body = {
-      code: 200,
-      msg: '评论成功',
-      data: commentObj
+      // const newComment = new Comments({ content: body.content })
+
+      // newComment.content = body.content
+      await newComment.save()
+      await Post.updateOne({ _id: body.tid }, {
+        $inc: {
+          answer: +1
+        }
+      })
+      const findPost = await Post.findById({ _id: body.tid })
+      await Users.updateOne({ _id: findPost.uid }, {
+        $inc: {
+          unread_num: 1
+        }
+      })
+      const user = await Users.findById({ _id: obj._id })
+
+      const notfiy = {
+        title: '文章评论',
+        unread_num: user.unread_num,
+        message: `${user.name}评论了您的文章${findPost.title}`
+      }
+
+      ctx.body = {
+        code: 200,
+        msg: '评论成功',
+        data: commentObj
+      }
+      wsSend(user._id, notfiy)
     }
-    wsSend(user._id, notfiy)
   }
 
   async reviseComment (ctx) {
