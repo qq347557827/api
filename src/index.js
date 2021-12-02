@@ -36,9 +36,9 @@ const middleware = compose([
       keepExtensions: true,
       maxFieldsSize: 5 * 1024 * 1024
     },
-    jsonLimit: '1mb',
+    jsonLimit: '10mb',
     // JSON 数据体的大小限制
-    formLimit: '1mb',
+    formLimit: '10mb',
     // 表单请求体的大小
     onError: err => {
       console.log('koabody TCL: err', err)

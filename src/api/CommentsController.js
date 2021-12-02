@@ -34,7 +34,6 @@ class CommentsController {
         tid: body.tid,
         cuid: obj._id
       }
-      // eslint-disable-next-line no-unused-vars
       // const commentObj = { tid, content, commentImg }
       if (ctx.request.files && ctx.request.files.file) {
         const file = ctx.request.files.file
@@ -56,7 +55,7 @@ class CommentsController {
       // const newComment = new Comments({ content: body.content })
 
       // newComment.content = body.content
-      await newComment.save()
+      const result = await newComment.save()
       await Post.updateOne({ _id: body.tid }, {
         $inc: {
           answer: +1
@@ -79,7 +78,7 @@ class CommentsController {
       ctx.body = {
         code: 200,
         msg: '评论成功',
-        data: commentObj
+        data: result
       }
       wsSend(user._id, notfiy)
     }
@@ -89,10 +88,10 @@ class CommentsController {
     // const file = ctx.request.files.file
     //
     const body = ctx.request.body
-    //
+
     const comment = await Comments.findById(body.commentId)
 
-    let result = {}
+    let result
 
     const obj = await getJWTPayload(ctx.header.authorization)
     if (obj._id === comment.cuid) {
@@ -117,7 +116,7 @@ class CommentsController {
       const data = await Comments.findById(body.commentId)
       ctx.body = {
         code: 200,
-        msg: '修改成功',
+        msg: result,
         data
       }
     } else {

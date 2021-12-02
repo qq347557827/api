@@ -14,7 +14,6 @@ const getJWTPayload = token => {
   try {
     if (/^Bearer/.test(token)) {
       tk = jwt.verify(token.split(' ')[1], config.JWT_SECRET)
-      console.log('tk: ', tk)
       return tk
     } else {
       tk = jwt.verify(token, config.JWT_SECRET)
@@ -194,9 +193,10 @@ const base64ToImg = async (base) => {
   const picname = uuidv4()
   const destPath = `${dir}/${picname}.${ext}`
 
-  await fs.writeFile(destPath, dataBuffer, function (err) {
+  const result = await fs.writeFile(destPath, dataBuffer, function (err) {
     console.log('err: ', err)
   })
+  console.log('result: ', result)
   return `/${moment().format('YYYYMMDD')}/${picname}.${ext}`
 }
 
