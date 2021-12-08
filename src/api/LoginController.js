@@ -51,7 +51,7 @@ class LoginController {
         msg: '邮件发送成功'
       }
     } catch (e) {
-      console.log(e)
+
     }
   }
 
@@ -60,11 +60,12 @@ class LoginController {
     // 接收用户的数据
     // 返回token
     const { body } = ctx.request
-    console.log('body: ', body)
+
     const sid = body.sid
     const code = body.code
     // 验证图片验证码的时效性、正确性
     const result = await checkCode(sid, code)
+    console.log('result: ', result)
     if (result) {
       // 验证用户账号密码是否正确
       let checkUserPasswd = false

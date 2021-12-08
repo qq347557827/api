@@ -1,4 +1,4 @@
-import { getValue } from '@/config/RedisConfig'
+import { client, getValue } from '@/config/RedisConfig'
 import config from '../config/index'
 import jwt from 'jsonwebtoken'
 import fs from 'fs'
@@ -19,13 +19,18 @@ const getJWTPayload = token => {
       tk = jwt.verify(token, config.JWT_SECRET)
     }
   } catch (error) {
-    console.log('error: ', error)
+
   }
   return tk
 }
 
 const checkCode = async (key, value) => {
+  // const red = await client.getAsync(key)
+
+  // const name = await client.getAsync('name')
+
   const redisData = await getValue(key)
+
   if (redisData != null) {
     if (redisData.toLowerCase() === value.toLowerCase()) {
       return true
@@ -71,7 +76,7 @@ const dirExists = async (dir) => {
   const status = await dirExists(tempDir)
   if (status) {
     const result = await mkdir(dir)
-    console.log('TCL: dirExists -> result', result)
+
     return result
   } else {
     return false
@@ -194,15 +199,13 @@ const base64ToImg = async (base) => {
   const destPath = `${dir}/${picname}.${ext}`
 
   const result = await fs.writeFile(destPath, dataBuffer, function (err) {
-    console.log('err: ', err)
+
   })
-  console.log('result: ', result)
+
   return `/${moment().format('YYYYMMDD')}/${picname}.${ext}`
 }
 
 const wsSend = async (id, notfiy) => {
-  console.log('notfiy: ', notfiy)
-  console.log('id: ', id)
   global.ws.send(id, notfiy)
 }
 export {

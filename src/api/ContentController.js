@@ -92,7 +92,7 @@ class ContentController {
   // 上传图片
   async uploadImg (ctx) {
     const file = ctx.request.files.file
-    console.log('file: ', file)
+
     // 图片名称、图片格式、存储的位置，返回前台一可以读取的路径
     const ext = file.name.split('.').pop()
     const dir = `${config.uploadPath}/${moment().format('YYYYMMDD')}`
@@ -135,21 +135,21 @@ class ContentController {
   // 添加新贴
   async addPost (ctx) {
     const { body } = ctx.request
-    console.log('addPost->body: ', body)
+
     const sid = body.sid
     const code = body.code
     // 验证图片验证码的时效性、正确性
     const result = await checkCode(sid, code)
-    console.log('addPost->result: ', result)
+
     if (result) {
       const obj = await getJWTPayload(ctx.header.authorization)
-      console.log('obj: ', obj)
+
       // 判断用户的积分数是否 > integral，否则，提示用户积分不足发贴
       // 用户积分足够的时候，新建Post，减除用户对应的积分
       const user = await User.findByID({ _id: obj._id })
-      console.log('user: ', user)
+
       if (user.integral < body.integral) {
-        console.log('user.integral: ', user.integral)
+
         ctx.body = {
           code: 501,
           msg: '积分不足'
@@ -159,10 +159,10 @@ class ContentController {
         await User.updateOne({ _id: obj._id }, { $inc: { integral: -body.integral } })
       }
       const newPost = new Post(body)
-      console.log('newPost: ', newPost)
+
       newPost.uid = obj._id
       const result = await newPost.save()
-      console.log('result: ', result)
+
       ctx.body = {
         code: 200,
         msg: '成功的保存的文章',

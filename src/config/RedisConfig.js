@@ -32,7 +32,7 @@ const options = {
 const client = promisifyAll(redis.createClient(options))
 
 client.on('error', (err) => {
-  console.log('Redis Client Error:' + err)
+  console.log('err: ', err)
 })
 
 const setValue = (key, value, time) => {
@@ -70,13 +70,7 @@ const getHValue = (key) => {
 }
 
 const delValue = (key) => {
-  client.del(key, (err, res) => {
-    if (res === 1) {
-      console.log('delete successfully')
-    } else {
-      console.log('delete redis key error:' + err)
-    }
-  })
+  client.del(key)
 }
 
 export {

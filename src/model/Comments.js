@@ -37,7 +37,7 @@ CommentsSchema.statics = {
     return this.findOne({ _id: id })
   },
   getCommentsList: function (id, page, limit) {
-    console.log('id: ', id)
+
     return this.find({ tid: id }).populate({
       path: 'cuid',
       select: '_id name pic isVip',

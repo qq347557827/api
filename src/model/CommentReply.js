@@ -42,7 +42,7 @@ CommentReplySchema.statics = {
   // 查询评论下的回复
   // eslint-disable-next-line camelcase
   getCommentReplyList (comment_id) {
-    console.log('comment_id: ', comment_id)
+
     return this.find({ comment_id: comment_id, status: { $eq: '0' } })
       .populate({
         path: 'from_uid',

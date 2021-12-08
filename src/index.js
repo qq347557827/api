@@ -41,7 +41,7 @@ const middleware = compose([
     formLimit: '10mb',
     // 表单请求体的大小
     onError: err => {
-      console.log('koabody TCL: err', err)
+
     }
   }),
   statics(path.join(__dirname, '../public')),
@@ -61,7 +61,7 @@ const middleware = compose([
 if (!config.isDevMode) {
   app.use(compress())
 }
-console.log(config.baseUrl)
+
 app.use(middleware)
 app.use(router())
 
