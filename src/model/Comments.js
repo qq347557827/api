@@ -11,7 +11,7 @@ const CommentsSchema = new Schema({
   commentImg: { type: String },
   created: { type: Date },
   hands: { type: Number, default: 0 },
-  status: { type: String, default: '1' },
+  status: { type: String, default: '0' },
   isRead: { type: String, default: '0' },
   isBest: { type: String, default: '0' }
 }, { toJSON: { virtuals: true } })
@@ -37,6 +37,7 @@ CommentsSchema.statics = {
     return this.findOne({ _id: id })
   },
   getCommentsList: function (id, page, limit) {
+    console.log('id: ', id)
     return this.find({ tid: id }).populate({
       path: 'cuid',
       select: '_id name pic isVip',

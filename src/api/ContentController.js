@@ -144,19 +144,19 @@ class ContentController {
     if (result) {
       const obj = await getJWTPayload(ctx.header.authorization)
       console.log('obj: ', obj)
-      // 判断用户的积分数是否 > fav，否则，提示用户积分不足发贴
+      // 判断用户的积分数是否 > integral，否则，提示用户积分不足发贴
       // 用户积分足够的时候，新建Post，减除用户对应的积分
       const user = await User.findByID({ _id: obj._id })
       console.log('user: ', user)
-      if (user.favs < body.favs) {
-        console.log('user.favs: ', user.favs)
+      if (user.integral < body.integral) {
+        console.log('user.integral: ', user.integral)
         ctx.body = {
           code: 501,
           msg: '积分不足'
         }
         return
       } else {
-        await User.updateOne({ _id: obj._id }, { $inc: { favs: -body.favs } })
+        await User.updateOne({ _id: obj._id }, { $inc: { integral: -body.integral } })
       }
       const newPost = new Post(body)
       console.log('newPost: ', newPost)

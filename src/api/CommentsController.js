@@ -7,7 +7,7 @@ import Comments from '../model/Comments'
 import Post from '../model/Post'
 import Users from '../model/User'
 import Hands from '../model/CommentsHands'
-import Chats from '../model/CommentChat'
+import Reply from '../model/CommentReply'
 
 import fs from 'fs'
 import mkdir from 'make-dir'
@@ -178,7 +178,7 @@ class CommentsController {
     const comment = await Comments.findById(body.id)
     const post = await Post.findById(bodyTid)
     if (post.uid === obj._id) {
-      const fav = post.favs ? post.favs : 0
+      const integral = post.integral ? post.integral : 0
       if (comment.tid === bodyTid && comment.isBest !== '1' && post.isEnd !== '1') {
         await Comments.updateOne({ _id: body.id }, {
           $set: {
@@ -193,12 +193,12 @@ class CommentsController {
         if (comment.cuid !== post.uid) {
           // await Users.updateOne({ _id: post.uid }, {
           //   $inc: {
-          //     favs: - parseInt(fav)
+          //     integrals: - parseInt(integral)
           //   }
           // })
           await Users.updateOne({ _id: comment.cuid }, {
             $inc: {
-              favs: parseInt(fav)
+              integral: parseInt(integral)
             }
           })
         }
@@ -221,63 +221,71 @@ class CommentsController {
   }
 
   // 评论回复
-  async chatRayle (ctx) {
+  async commentReply (ctx) {
     const body = ctx.request.body
-    // c
-    const commentImg = body.commentImg ? await base64ToImg(body.commentImg) : ''
     const obj = await getJWTPayload(ctx.header.authorization)
-    body.commentImg = commentImg
-    body.chat_id = obj._id
-    const chat = await new Chats(body)
-    const result = await chat.save()
-    await Comments.updateOne({ _id: body.comment_id }, {
-      $inc: {
-        reply_count: 1
+    if (body.from_uid === obj._id) {
+      const commentImg = body.commentImg ? await base64ToImg(body.commentImg) : ''
+      body.commentImg = commentImg
+      const reply = new Reply(body)
+      const result = await reply.save()
+      await Comments.updateOne({ _id: body.comment_id }, {
+        $inc: {
+          reply_count: 1
+        }
+      })
+      // Post.updateOne({ _id: body.tid }, {
+      //   $inc: {
+      //     answer: 1
+      //   }
+      // })
+      await Post.updateOne({ _id: body.tid }, {
+        $inc: {
+          answer: +1
+        }
+      })
+      const data = await Reply.getReplyOne(result._id)
+      ctx.body = {
+        code: 200,
+        data
       }
-    })
-
-    ctx.body = {
-      code: 200,
-      data: result
     }
   }
 
   // 评论回复 再回复
-  async chatRayleChat (ctx) {
+  async replyToReply (ctx) {
     const body = ctx.request.body
-    const commentImg = body.commentImg ? await base64ToImg(body.commentImg) : ''
-    body.commentImg = commentImg
     const obj = await getJWTPayload(ctx.header.authorization)
-    body.chat_id = obj._id
+    if (body.from_uid === obj._id) {
+      const commentImg = body.commentImg ? await base64ToImg(body.commentImg) : ''
+      body.commentImg = commentImg
+      const reply = new Reply(body)
+      const result = await reply.save()
+      await Comments.updateOne({ _id: body.comment_id }, {
+        $inc: {
+          reply_count: 1
+        }
+      })
 
-    const chat = await new Chats(body)
-    const result = await chat.save()
-    await Comments.updateOne({ _id: body.comment_id }, {
-      $inc: {
-        reply_count: 1
+      // const data = await Reply.getChatOne(result.id)
+      ctx.body = {
+        code: 200,
+        data: result
       }
-    })
-
-    const data = await Chats.getChatOne(result.id)
-
-    ctx.body = {
-      code: 200,
-      data: data
     }
   }
 
   // 点赞
-  async setHand (ctx) {
+  async commentHand (ctx) {
     const body = ctx.request.body
 
     const obj = await getJWTPayload(ctx.header.authorization)
-    const handed = body.handed || '0'
-    const findHands = await Hands.findOne({ cid: body.cid })
-    if (handed === '0' && !findHands) {
-      const hands = new Hands(body)
+    const handed = body.handed || '1'
+    const findHand = await Hands.findOne({ cid: body._id, uid: obj._id })
+    if (handed === '1' && !findHand) {
+      const hands = new Hands({ cid: body._id, uid: obj._id })
       const data = await hands.save()
-
-      const result = await Comments.updateOne({ _id: body.cid }, {
+      const result = await Comments.updateOne({ _id: body._id }, {
         $inc: {
           hands: 1
         }
@@ -294,9 +302,51 @@ class CommentsController {
           msg: '点赞失败'
         }
       }
-    } else if (body.handed === '1' && findHands && obj._id === findHands.uid) {
-      await Hands.deleteOne({ _id: findHands._id })
-      const result = await Comments.updateOne({ _id: body.cid }, {
+    } else if (body.handed === '0' && findHand) {
+      await Hands.deleteOne({ _id: findHand._id })
+      const result = await Comments.updateOne({ _id: body._id }, {
+        $inc: {
+          hands: -1
+        }
+      })
+      if (result.ok === 1) {
+        ctx.body = {
+          code: 200,
+          msg: '取消点赞成功'
+        }
+      }
+    }
+  }
+
+  async replyHand (ctx) {
+    const body = ctx.request.body
+
+    const obj = await getJWTPayload(ctx.header.authorization)
+    const handed = body.handed || '1'
+    const findHand = await Hands.findOne({ reply_id: body._id, uid: obj._id })
+    if (handed === '1' && !findHand) {
+      const hands = new Hands({ reply_id: body._id, uid: obj._id })
+      const data = await hands.save()
+      const result = await Reply.updateOne({ _id: body._id }, {
+        $inc: {
+          hands: 1
+        }
+      })
+      if (result.ok === 1) {
+        ctx.body = {
+          code: 200,
+          data: data,
+          msg: '点赞成功'
+        }
+      } else {
+        ctx.body = {
+          code: 500,
+          msg: '点赞失败'
+        }
+      }
+    } else if (body.handed === '0' && findHand) {
+      await Hands.deleteOne({ _id: findHand._id })
+      const result = await Reply.updateOne({ _id: body._id }, {
         $inc: {
           hands: -1
         }
@@ -313,7 +363,7 @@ class CommentsController {
   // 获取评论
   async getComments (ctx) {
     const params = ctx.query
-
+    const obj = await getJWTPayload(ctx.headers.authorization)
     const tid = params.tid
     const page = params.page ? params.page - 1 : 0
     const limit = params.limit ? parseInt(params.limit) : 10
@@ -330,11 +380,36 @@ class CommentsController {
     result = result.map(item => item.toJSON())
     for (let i = 0; i < result.length; i++) {
       let item = result[i]
-
+      // 这是判断评论已被删除,而评论下面没有回复, 就删除这条不显示
+      // 如果评论下面有数据,就把评论信息改为删除信息
+      if ((item.status === '1' || item.status === '2') && item.reply_count < 1) {
+        delete result[i]
+      } else if (item.status === '1') {
+        item.content = '该评论已被用户删除'
+        item.commentImg = ''
+      } else if (item.status === '2') {
+        item.content = '该评论违规被系统删除'
+        item.commentImg = ''
+      }
       const id = item._id.toJSON()
-      const chats = await Chats.getCommentChatList(id)
-      if (chats.length > 0) {
-        result[i].chats = chats
+      let reply = await Reply.getCommentReplyList(id)
+      if (reply.length > 0) {
+        reply = reply.map(item => item.toJSON())
+        if (obj) {
+          for (let k = 0; k < reply.length; k++) {
+            const RyItem = reply[k]
+            const Rid = RyItem._id.toJSON()
+            RyItem.handed = '0'
+            const replyHand = await Hands.findOne({ reply_id: Rid, uid: obj._id })
+
+            if (replyHand) {
+              if (replyHand.uid === obj._id) {
+                reply[k].handed = '1'
+              }
+            }
+          }
+        }
+        item.reply = reply
       }
     }
 
@@ -347,10 +422,8 @@ class CommentsController {
           item.handed = '0'
           const commentHands = await Hands.findOne({ cid: item._id, uid: obj._id })
 
-          if (commentHands) {
-            if (commentHands.uid === obj._id) {
-              item.handed = '1'
-            }
+          if (commentHands && commentHands.uid === obj._id) {
+            item.handed = '1'
           }
         }
       }
@@ -385,6 +458,62 @@ class CommentsController {
         code: 500,
         msg: '查询评论记录失败！'
       }
+    }
+  }
+
+  // 删除评论
+  async deleteComment (ctx) {
+    const { body } = ctx.request
+    const { status } = body
+    let result
+    if (status === '1') {
+      const commentCuid = await Comments.findOne({ _id: body._id }, { cuid: 1 })
+      if (ctx._id === commentCuid.cuid && ctx._id === body.cuid._id) {
+        result = await Comments.updateOne({ _id: body._id }, { status: '1' })
+      }
+    } else if (status === '2') {
+      const user = await Users.findOne({ _id: ctx._id }, { roles: 1 })
+      const roles = ['admin', 'super_admin']
+      let flg
+      for (let i = 0; i < user.roles.length; i++) {
+        const role = user.roles[i]
+        roles.includes(role) && (flg = true)
+      }
+      if (flg) {
+        result = await Comments.updateOne({ _id: body._id }, { status: '2' })
+      }
+    }
+    ctx.body = {
+      code: 200,
+      body: result
+    }
+  }
+
+  // 删除回复
+  async deleteReply (ctx) {
+    const { body } = ctx.request
+    const { status } = body
+    let result
+    if (status === '1') {
+      const reply = await Reply.findOne({ _id: body._id }, { from_uid: 1 })
+      if (ctx._id === reply.from_uid && ctx._id === body.cuid._id) {
+        result = await Reply.updateOne({ _id: body._id }, { status: '1' })
+      }
+    } else if (status === '2') {
+      const user = await Users.findOne({ _id: ctx._id }, { roles: 1 })
+      const roles = ['admin', 'super_admin']
+      let flg
+      for (let i = 0; i < user.roles.length; i++) {
+        const role = user.roles[i]
+        roles.includes(role) && (flg = true)
+      }
+      if (flg) {
+        result = await Reply.updateOne({ _id: body._id }, { status: '2' })
+      }
+    }
+    ctx.body = {
+      code: 200,
+      body: result
     }
   }
 }

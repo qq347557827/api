@@ -8,7 +8,7 @@ const UserSchema = new Schema({
   name: { type: String },
   created: { type: Date },
   updated: { type: Date },
-  favs: { type: Number, default: 100 },
+  integral: { type: Number, default: 100 },
   gender: { type: String, default: '' },
   roles: { type: Array, default: ['user'] },
   pic: { type: String, default: '/img/header.jpg' },

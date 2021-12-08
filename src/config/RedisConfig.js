@@ -7,6 +7,7 @@ const options = {
   port: config.REDIS.port,
   password: config.REDIS.password,
   detect_buffers: true,
+  no_ready_check: true,
   retry_strategy: function (options) {
     if (options.error && options.error.code === 'ECONNREFUSED') {
       // End reconnecting on a specific error and flush all commands with

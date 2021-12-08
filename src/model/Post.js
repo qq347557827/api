@@ -9,7 +9,8 @@ const PostSchema = new Schema({
   content: { type: String },
   created: { type: Date },
   catalog: { type: String },
-  fav: { type: String },
+  // 积分
+  integral: { type: Number, default: 0 },
   isEnd: { type: String, default: '0' },
   reads: { type: Number, default: 0 },
   answer: { type: Number, default: 0 },

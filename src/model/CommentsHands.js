@@ -5,6 +5,7 @@ const Schema = mongoose.Schema
 const CommentsSchema = new Schema({
   // 'cid': { type: String},
   cid: { type: String, ref: 'comments' },
+  reply_id: { type: String, ref: 'comment_reply' },
   uid: { type: String, ref: 'users' },
   created: { type: Date }
 })

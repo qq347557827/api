@@ -8,8 +8,9 @@ const router = new Router()
 router.prefix('/user')
 // 获得用户信息
 router.get('/userInfo', userController.getUserInfo)
+
 // 用户签到
-router.get('/fav', userController.userSign)
+router.get('/sign', userController.userSign)
 
 // 更新用户的基本信息
 router.post('/basic', userController.updateUserInfo)

@@ -6,7 +6,7 @@ const Schema = mongoose.Schema
 const SignRecordSchema = new Schema({
   uid: { type: String, ref: 'users' },
   created: { type: Date },
-  favs: { type: Number }
+  integral: { type: Number }
 })
 
 SignRecordSchema.pre('save', function (next) {
